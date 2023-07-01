@@ -1,3 +1,4 @@
+import datetime
 import socket
 import sys
 import struct
@@ -62,32 +63,37 @@ def send_hb(s):
   #send HB
   send_data = 'A'
   s.sendto(send_data.encode('utf-8'), (ip, SendPort))
-  print('send heartbeat')
+  #print('send heartbeat')
 
 send_hb(s)
 
 print("Ctrl+C to exit the program")
 
 pknt = 0
-while True:
-  try:
-    data, address = s.recvfrom(4096)
-    pknt = pknt + 1
-    print("received: %d bytes" % len(data))
-    #print(' '.join(format(x, '02x') for x in data))
-    ddata = salsa20_dec(data)
-    #print("decoded: %d bytes" % len(ddata))
-    #print(' '.join(format(x, '02x') for x in ddata))
-    if len(ddata) > 0:
-      #https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketGT7.cs
-      #RPM: 15th 4byte ints
-      rpm = struct.unpack('f', ddata[15*4:15*4+4])
-      print('RPM %d' %(rpm))
-    if pknt > 100:
+filename = datetime.datetime.now().strftime("%Y%m%dT%H%M%S.gt7")
+with open(filename, "wb") as binary_file:
+  while True:
+    try:
+      data, address = s.recvfrom(4096)
+      pknt = pknt + 1
+      #print("received: %d bytes" % len(data))
+      #print(' '.join(format(x, '02x') for x in data))
+      ddata = salsa20_dec(data)
+      if len(ddata) > 0:
+        if (len(ddata) != 296):
+          print("decoded: %d bytes" % len(ddata))
+          sys.Exit(1)
+        #print(' '.join(format(x, '02x') for x in ddata))
+        binary_file.write(ddata)
+        #https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketGT7.cs
+        #RPM: 15th 4byte ints
+        rpm = struct.unpack('f', ddata[15*4:15*4+4])
+        print('RPM %d' %(rpm))
+      if pknt > 100:
+        send_hb(s)
+        pknt = 0
+    except Exception as e:
       send_hb(s)
       pknt = 0
-  except Exception as e:
-    send_hb(s)
-    pknt = 0
-    pass
+      pass
 
