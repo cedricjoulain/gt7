@@ -8,6 +8,7 @@ import (
 	"log"
 	"math"
 	"os"
+	"time"
 )
 
 type Message [296]byte
@@ -24,6 +25,10 @@ type XYZ struct {
 
 // TimeSpan number of elapsed milliseconds
 type TimeSpan int32
+
+func (t TimeSpan) String() string {
+	return (time.Duration(t) * time.Duration(time.Millisecond)).String()
+}
 
 // SimulatorFlags Flags/States of the simulation.
 type SimulatorFlags int16
@@ -68,7 +73,7 @@ const (
 )
 
 type Packet struct {
-	magic                          int32          // 0:4
+	Magic                          int32          // 0:4
 	Position                       XYZ            // 4:16
 	Velocity                       XYZ            // 16:28
 	Rotation                       XYZ            // 28:40
@@ -76,7 +81,7 @@ type Packet struct {
 	AngularVelocity                XYZ            // 44:56
 	BodyHeight                     float32        // 56:60
 	EngineRPM                      float32        // 60:64
-	reserved1                      int32          // 64:68
+	Reserved1                      int32          // 64:68
 	GasLevel                       float32        // 68:74
 	GasCapacity                    float32        // 74:78
 	MetersPerSecond                float32        // 78:82
@@ -125,7 +130,7 @@ type Packet struct {
 	TireRR_SusHeight     float32 // 216:220
 
 	// Seems to be reserved - server does not set that
-	reserved2 [8]int32 // 220:252
+	Reserved2 [8]int32 // 220:252
 
 	ClutchPedal            float32 // 252:256
 	ClutchEngagement       float32 // 256:260
@@ -144,11 +149,11 @@ type Packet struct {
 // Analyse open raw decoded data and parse
 func Analyse(filename string) (err error) {
 	var (
-		nbr     int
-		r       io.Reader
-		f       *os.File
-		header  [2]byte
-		message Message
+		nbr    int
+		r      io.Reader
+		f      *os.File
+		header [2]byte
+		packet Packet
 	)
 	if f, err = os.Open(filename); err != nil {
 		err = fmt.Errorf("unable to open %s:%s", filename, err)
@@ -166,7 +171,7 @@ func Analyse(filename string) (err error) {
 		return
 	}
 	if header[0] == 0x1f && header[1] == 0x8b {
-		// this is a gzip
+		// this is a gzipRPM
 		if r, err = gzip.NewReader(f); err != nil {
 			err = fmt.Errorf("unable to create gzip reader for %s:%s", filename, err)
 			return
@@ -175,11 +180,19 @@ func Analyse(filename string) (err error) {
 		r = f
 	}
 	for err == nil {
-		if _, err = io.ReadFull(r, message[:]); err != nil {
+		if err = binary.Read(r, binary.LittleEndian, &packet); err != nil {
 			break
 		}
 		nbr++
-		log.Println("message", nbr, "RPM", message.RPM())
+		if packet.MetersPerSecond > 0 {
+			log.Println(
+				"nbr", nbr,
+				"Selected Gear", packet.Gear%16,
+				"RPM", packet.EngineRPM,
+				"Brake", packet.Brake,
+				"Throttle", packet.Throttle,
+				"MetersPerSecond", packet.MetersPerSecond)
+		}
 	}
 	if err == io.EOF {
 		// just the end
