@@ -162,7 +162,7 @@ func EchartsData(packets []Packet) (data [][]float64) {
 	for i, p := range packets {
 		data[i] = []float64{
 			float64(p.Position.X),
-			float64(p.Position.Z),
+			float64(-p.Position.Z),
 			float64(p.Brake),
 			float64(p.Throttle),
 		}
@@ -197,7 +197,7 @@ func (p Packet) CsvHeader() string {
 }
 
 // Analyse open raw decoded data and parse
-func Analyse(filename string) (packets []Packet, err error) {
+func Analyse(filename string, lap int) (packets []Packet, err error) {
 	var (
 		nbr    int
 		r      io.Reader
@@ -239,7 +239,9 @@ func Analyse(filename string) (packets []Packet, err error) {
 		if packet.LapCount != 0 {
 			// ensure counted lap
 			fmt.Println(packet.CsvLine())
-			packets = append(packets, packet)
+			if packet.LapCount == int16(lap) {
+				packets = append(packets, packet)
+			}
 		}
 	}
 	if err == io.EOF {

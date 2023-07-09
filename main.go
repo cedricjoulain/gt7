@@ -28,6 +28,7 @@ func main() {
 	ipPtr := flag.String("ip", "PS5-89A73E", "ip or network name of PS5 GranTurismo7 to listen")
 	filePtr := flag.String("file", "", "GT7 raw data file to analyse")
 	recordPtr := flag.Bool("rec", false, "record mode, listening at ip")
+	lapPtr := flag.Int("lap", 1, "lap number to look at")
 	portPtr := flag.Int("port", 8080, "an int")
 	flag.Parse()
 
@@ -38,7 +39,7 @@ func main() {
 		// end
 		os.Exit(0)
 	} else {
-		packets, err := Analyse(*filePtr)
+		packets, err := Analyse(*filePtr, *lapPtr)
 		if err != nil {
 			log.Fatal(err)
 		}

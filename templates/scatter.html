@@ -23,12 +23,12 @@
     "use strict";
     var chart = document.getElementById("content");
     // based on prepared DOM, initialize echarts instance
-    var Chart = echarts.init(chart, "echarts-race");
+    var Chart = echarts.init(chart, "echarts-race", {height:1024});
     var option;
     // Resize chart for any resize event
     function chartSize() {
-      chart.style.width = "98%";
-      chart.style.height = "98%";
+      chart.style.width = "100%";
+      chart.style.height = "100%";
       Chart.resize();
     }
     window.load = chartSize;
