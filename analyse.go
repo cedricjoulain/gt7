@@ -5,9 +5,9 @@ import (
 	"encoding/binary"
 	"fmt"
 	"io"
-	"log"
 	"math"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -21,6 +21,16 @@ type XYZ struct {
 	X float32 // 0:4
 	Y float32 //4:8
 	Z float32 //8:12
+}
+
+// String, comma separated
+func (v XYZ) String() string {
+	return fmt.Sprintf("%f,%f,%f", v.X, v.Y, v.Z)
+}
+
+// Header, comma separated
+func XYZHeader(name string) string {
+	return fmt.Sprintf("%s X, %s Y, %s Z", name, name, name)
 }
 
 // TimeSpan number of elapsed milliseconds
@@ -146,6 +156,32 @@ type Packet struct {
 	CarCode int32 // 300:304
 }
 
+// CsvLine dump one line of information comma separated
+// Order must respect CsvHeader
+func (p Packet) CsvLine() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "%s,", p.TimeOfDayProgression)
+	fmt.Fprintf(&b, "%d,", p.LapCount)
+	fmt.Fprintf(&b, "%d,", p.Throttle)
+	fmt.Fprintf(&b, "%d,", p.Brake)
+	fmt.Fprintf(&b, "%f,", p.MetersPerSecond)
+	fmt.Fprintf(&b, "%s,", p.Position)
+	return b.String()
+}
+
+// CsvHeader dump header informatio comma separated
+// Order must respect CsvLine
+func (p Packet) CsvHeader() string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "TimeOfDayProgression,")
+	fmt.Fprintf(&b, "LapCount,")
+	fmt.Fprintf(&b, "Throttle,")
+	fmt.Fprintf(&b, "Brake,")
+	fmt.Fprintf(&b, "MetersPerSecond,")
+	fmt.Fprintf(&b, "%s,", XYZHeader("Position"))
+	return b.String()
+}
+
 // Analyse open raw decoded data and parse
 func Analyse(filename string) (err error) {
 	var (
@@ -179,19 +215,15 @@ func Analyse(filename string) (err error) {
 	} else {
 		r = f
 	}
+	fmt.Println(packet.CsvHeader())
 	for err == nil {
 		if err = binary.Read(r, binary.LittleEndian, &packet); err != nil {
 			break
 		}
 		nbr++
-		if packet.MetersPerSecond > 0 {
-			log.Println(
-				"nbr", nbr,
-				"Selected Gear", packet.Gear%16,
-				"RPM", packet.EngineRPM,
-				"Brake", packet.Brake,
-				"Throttle", packet.Throttle,
-				"MetersPerSecond", packet.MetersPerSecond)
+		if packet.LapCount != 0 {
+			// ensure counted lap
+			fmt.Println(packet.CsvLine())
 		}
 	}
 	if err == io.EOF {
