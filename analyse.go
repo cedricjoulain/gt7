@@ -156,6 +156,20 @@ type Packet struct {
 	CarCode int32 // 300:304
 }
 
+// EchartsData generate data string (json) for echarts
+func EchartsData(packets []Packet) (data [][]float64) {
+	data = make([][]float64, len(packets))
+	for i, p := range packets {
+		data[i] = []float64{
+			float64(p.Position.X),
+			float64(p.Position.Z),
+			float64(p.Brake),
+			float64(p.Throttle),
+		}
+	}
+	return
+}
+
 // CsvLine dump one line of information comma separated
 // Order must respect CsvHeader
 func (p Packet) CsvLine() string {
@@ -183,7 +197,7 @@ func (p Packet) CsvHeader() string {
 }
 
 // Analyse open raw decoded data and parse
-func Analyse(filename string) (err error) {
+func Analyse(filename string) (packets []Packet, err error) {
 	var (
 		nbr    int
 		r      io.Reader
@@ -216,6 +230,7 @@ func Analyse(filename string) (err error) {
 		r = f
 	}
 	fmt.Println(packet.CsvHeader())
+	packets = make([]Packet, 0)
 	for err == nil {
 		if err = binary.Read(r, binary.LittleEndian, &packet); err != nil {
 			break
@@ -224,6 +239,7 @@ func Analyse(filename string) (err error) {
 		if packet.LapCount != 0 {
 			// ensure counted lap
 			fmt.Println(packet.CsvLine())
+			packets = append(packets, packet)
 		}
 	}
 	if err == io.EOF {

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{{.Title}}</title>
+  </head>
+
+  <body>
+
+    <!-- <a href="javascript:" id="return-to-top"><i class="fas fa-chevron-up"></i></a> -->
+    <!-- overload graph witdh to 100% -->
+    <div id="content" >
+        <div
+          id="chart-panel"
+          class="chart-panel"
+          style="-moz-user-select: none;"
+        ></div>
+    </div>
+
+    <script src="/js/lib/echarts-5.2.0.min.js"></script>
+    <script>
+    "use strict";
+    var chart = document.getElementById("content");
+    // based on prepared DOM, initialize echarts instance
+    var Chart = echarts.init(chart, "echarts-race");
+    var option;
+    // Resize chart for any resize event
+    function chartSize() {
+      chart.style.width = "98%";
+      chart.style.height = "98%";
+      Chart.resize();
+    }
+    window.load = chartSize;
+    window.onresize = chartSize;
+    document.onresize = chartSize;
+    document.onfullscreenchange = chartSize;
+    // ----
+    Chart.setOption(
+      (option = {
+        title : {
+          text: {{.Title}}
+        },
+        tooltip: {},
+        toolbox: {
+      right: 20,
+      feature: {
+        dataZoom: {}
+      }
+    },
+    grid: {
+      right: 70,
+      bottom: 70
+    },
+    xAxis: [{}],
+    yAxis: [{}],
+    dataZoom: [
+      {
+        type: 'inside'
+      },
+      {
+        type: 'slider',
+        showDataShadow: false
+      },
+      {
+        type: 'inside',
+        orient: 'vertical'
+      },
+      {
+        type: 'slider',
+        orient: 'vertical',
+        showDataShadow: false
+      }
+    ],
+    animation: false,
+        series: [
+          {
+            type: 'scatter',
+            data: {{.Data}},
+            dimensions: ['x', 'y'],
+            symbolSize: 3,
+            blendMode: 'source-over',
+            large: true,
+            largeThreshold: 500
+          }
+        ]
+      })
+    );
+    </script>
+  </body>
+</html>
