@@ -157,10 +157,10 @@ type Packet struct {
 }
 
 // EchartsData generate data string (json) for echarts
-func EchartsData(packets []Packet) (data [][]float64) {
-	data = make([][]float64, len(packets))
+func EchartsData(packets []Packet, data *[][]float64) {
+	*data = make([][]float64, len(packets))
 	for i, p := range packets {
-		data[i] = []float64{
+		(*data)[i] = []float64{
 			float64(p.Position.X),
 			float64(-p.Position.Z),
 			float64(p.Brake),

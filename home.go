@@ -8,7 +8,8 @@ import (
 // IndexPage template data
 type IndexPage struct {
 	Title template.HTML
-	Data  [][]float64
+	Data1 [][]float64
+	Data2 [][]float64
 }
 
 // HandleHome Handle Home route
@@ -17,7 +18,8 @@ func HandleHome(w http.ResponseWriter, r *http.Request) {
 
 	err := templates.ExecuteTemplate(w, "scatter.html", IndexPage{
 		Title: "GT7 Telemetry",
-		Data:  data, // hugly global
+		Data1: data1, // hugly global
+		Data2: data2, // hugly global
 	})
 	if err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)

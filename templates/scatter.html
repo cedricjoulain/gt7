@@ -78,6 +78,22 @@
             min: 0,
             max: 255,
             dimension: 2, // the third dimension of series.data (i.e. value[2]) is mapped
+            seriesIndex: 0,
+            inRange: {
+              // The visual configuration in the selected range
+              color: ['green', 'yellow', 'orange'], // A list of colors that defines the graph color mapping
+              // the minimum value of the data is mapped to 'blue', and
+              // the maximum value is mapped to 'red', // the maximum value is mapped to 'red', // the maximum value is mapped to 'red'.
+              // The rest is automatically calculated linearly.
+            },
+            calculable: true
+        },  
+        {
+            type: 'continuous',
+            min: 0,
+            max: 255,
+            dimension: 2, // the third dimension of series.data (i.e. value[2]) is mapped
+            seriesIndex: 1,
             inRange: {
               // The visual configuration in the selected range
               color: ['blue', '#121122', 'red'], // A list of colors that defines the graph color mapping
@@ -92,7 +108,13 @@
         series: [
           {
             type: 'scatter',
-            data: {{.Data}},
+            data: {{.Data1}},
+            dimensions: ['x', 'y'],
+            symbolSize: 3
+          },
+          {
+            type: 'scatter',
+            data: {{.Data2}},
             dimensions: ['x', 'y'],
             symbolSize: 3
           }

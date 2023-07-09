@@ -21,14 +21,17 @@ var templates = template.Must(template.ParseGlob("templates/*"))
 // will be used as Last-Modified for html/js... templates
 var (
 	startTime = time.Now()
-	data      [][]float64
+	data1     [][]float64
+	data2     [][]float64
 )
 
 func main() {
 	ipPtr := flag.String("ip", "PS5-89A73E", "ip or network name of PS5 GranTurismo7 to listen")
-	filePtr := flag.String("file", "", "GT7 raw data file to analyse")
+	file1Ptr := flag.String("file1", "", "GT7 raw data ref file to analyse (small point)")
+	lap1Ptr := flag.Int("lap1", 1, "lap number to look at")
+	file2Ptr := flag.String("file2", "", "GT7 raw data file to compare (big point)")
+	lap2Ptr := flag.Int("lap2", 1, "lap number to look at")
 	recordPtr := flag.Bool("rec", false, "record mode, listening at ip")
-	lapPtr := flag.Int("lap", 1, "lap number to look at")
 	portPtr := flag.Int("port", 8080, "an int")
 	flag.Parse()
 
@@ -39,11 +42,16 @@ func main() {
 		// end
 		os.Exit(0)
 	} else {
-		packets, err := Analyse(*filePtr, *lapPtr)
+		packets, err := Analyse(*file1Ptr, *lap1Ptr)
 		if err != nil {
 			log.Fatal(err)
 		}
-		data = EchartsData(packets)
+		EchartsData(packets, &data1)
+		packets, err = Analyse(*file2Ptr, *lap2Ptr)
+		if err != nil {
+			log.Fatal(err)
+		}
+		EchartsData(packets, &data2)
 	}
 	router := mux.NewRouter()
 
