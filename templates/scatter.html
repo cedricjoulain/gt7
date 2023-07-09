@@ -36,52 +36,65 @@
     document.onresize = chartSize;
     document.onfullscreenchange = chartSize;
     // ----
-    Chart.setOption(
-      (option = {
+    Chart.setOption((
+      option = {
         title : {
           text: {{.Title}}
         },
         tooltip: {},
         toolbox: {
-      right: 20,
-      feature: {
-        dataZoom: {}
-      }
-    },
-    grid: {
-      right: 70,
-      bottom: 70
-    },
-    xAxis: [{}],
-    yAxis: [{}],
-    dataZoom: [
-      {
-        type: 'inside'
-      },
-      {
-        type: 'slider',
-        showDataShadow: false
-      },
-      {
-        type: 'inside',
-        orient: 'vertical'
-      },
-      {
-        type: 'slider',
-        orient: 'vertical',
-        showDataShadow: false
-      }
-    ],
-    animation: false,
+          right: 20,
+          feature: {
+            dataZoom: {}
+          }
+        },
+        grid: {
+          right: 70,
+          bottom: 70
+        },
+        xAxis: [{}],
+        yAxis: [{}],
+        dataZoom: [
+          {
+            type: 'inside'
+          },
+          {
+            type: 'slider',
+            showDataShadow: false
+          },
+          {
+            type: 'inside',
+            orient: 'vertical'
+          },
+          {
+            type: 'slider',
+            orient: 'vertical',
+            showDataShadow: false
+          }
+        ],
+        visualMap: [
+          {
+            type: 'continuous',
+            min: 0,
+            max: 255,
+            dimension: 2, // the third dimension of series.data (i.e. value[2]) is mapped
+            inRange: {
+              // The visual configuration in the selected range
+              color: ['blue', '#121122', 'red'], // A list of colors that defines the graph color mapping
+              // the minimum value of the data is mapped to 'blue', and
+              // the maximum value is mapped to 'red', // the maximum value is mapped to 'red', // the maximum value is mapped to 'red'.
+              // The rest is automatically calculated linearly.
+            },
+            calculable: true
+        }          
+        ],        
+        animation: false,
         series: [
           {
             type: 'scatter',
             data: {{.Data}},
             dimensions: ['x', 'y'],
-            symbolSize: 3,
-            blendMode: 'source-over',
-            large: true,
-            largeThreshold: 500
+            symbolSize: 3
           }
         ]
       })
