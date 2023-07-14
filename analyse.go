@@ -28,6 +28,11 @@ func (v XYZ) String() string {
 	return fmt.Sprintf("%f,%f,%f", v.X, v.Y, v.Z)
 }
 
+// Norm, Euclidean norm separated
+func (v XYZ) Norm() float64 {
+	return math.Sqrt(float64(v.X)*float64(v.X) + float64(v.Y)*float64(v.Y) + float64(v.Z)*float64(v.Z))
+}
+
 // Header, comma separated
 func XYZHeader(name string) string {
 	return fmt.Sprintf("%s X, %s Y, %s Z", name, name, name)
@@ -176,10 +181,13 @@ func (p Packet) CsvLine() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "%s,", p.TimeOfDayProgression)
 	fmt.Fprintf(&b, "%d,", p.LapCount)
+	fmt.Fprintf(&b, "%s,", p.BestLapTime)
 	fmt.Fprintf(&b, "%d,", p.Throttle)
 	fmt.Fprintf(&b, "%d,", p.Brake)
 	fmt.Fprintf(&b, "%f,", p.MetersPerSecond)
 	fmt.Fprintf(&b, "%s,", p.Position)
+	fmt.Fprintf(&b, "%s,", p.RoadPlane)
+	fmt.Fprintf(&b, "%f,", p.RoadPlaneDistance)
 	return b.String()
 }
 
@@ -189,10 +197,13 @@ func (p Packet) CsvHeader() string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "TimeOfDayProgression,")
 	fmt.Fprintf(&b, "LapCount,")
+	fmt.Fprintf(&b, "BestLapTime,")
 	fmt.Fprintf(&b, "Throttle,")
 	fmt.Fprintf(&b, "Brake,")
 	fmt.Fprintf(&b, "MetersPerSecond,")
 	fmt.Fprintf(&b, "%s,", XYZHeader("Position"))
+	fmt.Fprintf(&b, "%s,", XYZHeader("RoadPlane"))
+	fmt.Fprintf(&b, "RoadPlaneDistance")
 	return b.String()
 }
 
@@ -229,6 +240,7 @@ func Analyse(filename string, lap int) (packets []Packet, err error) {
 	} else {
 		r = f
 	}
+	prevLap := -1
 	fmt.Println(packet.CsvHeader())
 	packets = make([]Packet, 0)
 	for err == nil {
@@ -236,12 +248,13 @@ func Analyse(filename string, lap int) (packets []Packet, err error) {
 			break
 		}
 		nbr++
-		if packet.LapCount != 0 {
-			// ensure counted lap
+		if packet.LapCount != int16(prevLap) && packet.BestLapTime != -1 {
+			// ending lap with time
 			fmt.Println(packet.CsvLine())
-			if packet.LapCount == int16(lap) {
-				packets = append(packets, packet)
-			}
+		}
+		prevLap = int(packet.LapCount)
+		if packet.LapCount == int16(lap) {
+			packets = append(packets, packet)
 		}
 	}
 	if err == io.EOF {
