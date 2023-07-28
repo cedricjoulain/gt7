@@ -2,6 +2,7 @@ import datetime
 import socket
 import sys
 import struct
+import time
 # pip3 install salsa20
 from salsa20 import Salsa20_xor
 
@@ -70,30 +71,43 @@ send_hb(s)
 print("Ctrl+C to exit the program")
 
 pknt = 0
-filename = datetime.datetime.now().strftime("%Y%m%dT%H%M%S.gt7")
-with open(filename, "wb") as binary_file:
-  while True:
-    try:
-      data, address = s.recvfrom(4096)
-      pknt = pknt + 1
-      #print("received: %d bytes" % len(data))
-      #print(' '.join(format(x, '02x') for x in data))
-      ddata = salsa20_dec(data)
-      if len(ddata) > 0:
-        if (len(ddata) != 296):
-          print("decoded: %d bytes" % len(ddata))
-          sys.Exit(1)
+binary_file = None
+while True:
+  try:
+    data, address = s.recvfrom(4096)
+    pknt = pknt + 1
+    #print("received: %d bytes" % len(data))
+    #print(' '.join(format(x, '02x') for x in data))
+    ddata = salsa20_dec(data)
+    if len(ddata) > 0:
+      if (len(ddata) != 296):
+        print("decoded: %d bytes" % len(ddata))
+        time.sleep(10)
+      else:
         #print(' '.join(format(x, '02x') for x in ddata))
-        binary_file.write(ddata)
         #https://github.com/Nenkai/PDTools/blob/master/PDTools.SimulatorInterface/SimulatorPacketGT7.cs
         #RPM: 15th 4byte ints
-        rpm = struct.unpack('f', ddata[15*4:15*4+4])
-        print('RPM %d' %(rpm))
-      if pknt > 100:
-        send_hb(s)
-        pknt = 0
-    except Exception as e:
+        rpm = struct.unpack('f', ddata[15*4:15*4+4])[0]
+        #LapCount: 29x4th 2 bytes int
+        lap = struct.unpack('h', ddata[29*4:29*4+2])[0]
+        if lap == -1:
+          if binary_file is not None:
+            #need to close file!
+            binary_file.close()
+            binary_file = None
+        else:
+          #print(f'LAP {lap} RPM {rpm}')
+          if binary_file is None:
+            #need to open binary file
+            filename = datetime.datetime.now().strftime("%Y%m%dT%H%M%S.gt7")
+            print("Opening", filename)
+            binary_file = open(filename, "wb")
+          binary_file.write(ddata)
+    if pknt > 100:
       send_hb(s)
       pknt = 0
-      pass
+  except Exception as e:
+    send_hb(s)
+    pknt = 0
+    pass
 
